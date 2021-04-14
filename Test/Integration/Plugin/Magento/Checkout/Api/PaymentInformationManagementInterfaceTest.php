@@ -17,7 +17,7 @@ class PaymentInformationManagementInterfaceTest extends \PHPUnit\Framework\TestC
     /**
      * @SuppressWarnings(PHPMD.StaticAccess)
      */
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->objectManager = \Magento\TestFramework\ObjectManager::getInstance();
     }

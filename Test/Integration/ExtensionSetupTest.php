@@ -14,7 +14,7 @@ class ExtensionSetupTest extends \PHPUnit\Framework\TestCase
      */
     protected $objectManager;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->objectManager = \Magento\TestFramework\ObjectManager::getInstance();
     }

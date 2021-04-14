@@ -17,7 +17,7 @@ class GuestPaymentInformationManagementInterfaceTest extends \PHPUnit\Framework\
     /**
      * @SuppressWarnings(PHPMD.StaticAccess)
      */
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->objectManager = \Magento\TestFramework\ObjectManager::getInstance();
     }

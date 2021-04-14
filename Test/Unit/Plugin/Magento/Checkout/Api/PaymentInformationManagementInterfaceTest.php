@@ -38,7 +38,7 @@ class PaymentInformationManagementInterfaceTest extends \PHPUnit\Framework\TestC
      */
     private $extensionAttributesMock;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         /** @var \Magento\Quote\Model\Quote|\PHPUnit_Framework_MockObject_MockObject $quoteMock */
         $quoteMock = $this->getMockBuilder(\Magento\Quote\Model\Quote::class)

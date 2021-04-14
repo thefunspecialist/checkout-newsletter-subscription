@@ -38,7 +38,7 @@ class GuestPaymentInformationManagementInterfaceTest extends \PHPUnit\Framework\
      */
     private $extensionAttributesMock;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->subscriberMock = $this->getMockBuilder(\Magento\Newsletter\Model\Subscriber::class)
             ->disableOriginalConstructor()
