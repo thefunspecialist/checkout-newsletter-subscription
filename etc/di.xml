@@ -1,14 +1,10 @@
 <?xml version="1.0"?>
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
     <type name="Magento\Checkout\Api\PaymentInformationManagementInterface">
-        <plugin name="newsletter_subscription_checkout_model_payment_information_management"
-                type="MageSuite\CheckoutNewsletterSubscription\Plugin\Magento\Checkout\Api\PaymentInformationManagementInterface"
-                sortOrder="100"/>
+        <plugin name="checkout_newsletter_subscribe" type="MageSuite\CheckoutNewsletterSubscription\Plugin\Magento\Checkout\Api\PaymentInformationManagementInterface\NewsletterSubscribe" sortOrder="100"/>
     </type>
 
     <type name="Magento\Checkout\Api\GuestPaymentInformationManagementInterface">
-        <plugin name="newsletter_subscription_checkout_model_guest_payment_information_management"
-                type="MageSuite\CheckoutNewsletterSubscription\Plugin\Magento\Checkout\Api\GuestPaymentInformationManagementInterface"
-                sortOrder="100"/>
+        <plugin name="checkout_newsletter_subscribe" type="MageSuite\CheckoutNewsletterSubscription\Plugin\Magento\Checkout\Api\GuestPaymentInformationManagementInterface\NewsletterSubscribe" sortOrder="100"/>
     </type>
 </config>
