@@ -1,8 +1,8 @@
 <?php
 
-namespace MageSuite\CheckoutNewsletterSubscription\Test\Integration\Plugin\Magento\Checkout\Api;
+namespace MageSuite\CheckoutNewsletterSubscription\Test\Integration\Plugin\Magento\Checkout\Api\PaymentInformationManagementInterface;
 
-class PaymentInformationManagementInterfaceTest extends \PHPUnit\Framework\TestCase
+class NewsletterSubscribeTest extends \PHPUnit\Framework\TestCase
 {
     /**
      * @var \Magento\TestFramework\ObjectManager
@@ -12,7 +12,7 @@ class PaymentInformationManagementInterfaceTest extends \PHPUnit\Framework\TestC
     /**
      * @var string
      */
-    protected $pluginName = 'newsletter_subscription_checkout_model_payment_information_management';
+    protected $pluginName = 'checkout_newsletter_subscribe';
 
     /**
      * @SuppressWarnings(PHPMD.StaticAccess)
@@ -29,6 +29,7 @@ class PaymentInformationManagementInterfaceTest extends \PHPUnit\Framework\TestC
     {
         /** @var \Magento\TestFramework\Interception\PluginList $pluginList */
         $pluginList = $this->objectManager->create(\Magento\TestFramework\Interception\PluginList::class);
+
         return $pluginList->get(\Magento\Checkout\Api\PaymentInformationManagementInterface::class, []);
     }
 
@@ -36,7 +37,7 @@ class PaymentInformationManagementInterfaceTest extends \PHPUnit\Framework\TestC
     {
         $pluginInfo = $this->getPluginInfo();
         $this->assertSame(
-            \MageSuite\CheckoutNewsletterSubscription\Plugin\Magento\Checkout\Api\PaymentInformationManagementInterface::class,
+            \MageSuite\CheckoutNewsletterSubscription\Plugin\Magento\Checkout\Api\PaymentInformationManagementInterface\NewsletterSubscribe::class,
             $pluginInfo[$this->pluginName]['instance']
         );
     }
