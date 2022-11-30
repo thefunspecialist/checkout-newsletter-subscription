@@ -8,6 +8,14 @@
                     <description>Release 2.0.0 introduced because source code was adjusted to MageSuite codding standards.</description>
                 </entry>
             </tag>
+            <tag version="2.0.2" date="2022-11-30">
+                <entry>
+                    <type>FIX</type>
+                    <overview>Fix newsletter subscription in checkout</overview>
+                    <description>Use jQuery prop method instead of attr to get newsletter checkbox check state.</description>
+                    <ticket_id>IPET-1756</ticket_id>
+                </entry>
+            </tag>
         </changelog>
     </module>
 </config>
