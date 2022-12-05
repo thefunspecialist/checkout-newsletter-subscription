@@ -4,15 +4,23 @@ namespace MageSuite\CheckoutNewsletterSubscription\Plugin\Magento\Checkout\Api\G
 
 class NewsletterSubscribe
 {
-    protected \Magento\Newsletter\Model\Subscriber $subscriber;
+    protected \Magento\Store\Model\StoreManagerInterface $storeManager;
+
+    protected \Magento\Customer\Api\CustomerRepositoryInterface $customerRepository;
+
+    protected \Magento\Newsletter\Model\SubscriptionManagerInterface $subscriptionManager;
 
     protected \Psr\Log\LoggerInterface $logger;
 
     public function __construct(
-        \Magento\Newsletter\Model\Subscriber $subscriber,
+        \Magento\Store\Model\StoreManagerInterface $storeManager,
+        \Magento\Customer\Api\CustomerRepositoryInterface $customerRepository,
+        \Magento\Newsletter\Model\SubscriptionManagerInterface $subscriptionManager,
         \Psr\Log\LoggerInterface $logger
     ) {
-        $this->subscriber = $subscriber;
+        $this->storeManager = $storeManager;
+        $this->customerRepository = $customerRepository;
+        $this->subscriptionManager = $subscriptionManager;
         $this->logger = $logger;
     }
 
@@ -28,14 +36,41 @@ class NewsletterSubscribe
             return $return;
         }
 
+        if (!$this->isNewsletterCheckboxInCheckoutMarked($billingAddress)) {
+            return $return;
+        }
+
         try {
-            if ($billingAddress->getExtensionAttributes()->getNewsletterSubscribe()) {
-                $this->subscriber->subscribe($email);
+            $customerId = $this->getCustomerIdByEmail($email);
+            if ($customerId) {
+                $this->subscriptionManager->subscribeCustomer($customerId, $this->storeManager->getStore()->getId());
+            } else {
+                $this->subscriptionManager->subscribe($email, $this->storeManager->getStore()->getId());
             }
-        } catch (\Exception $e) {
-            $this->logger->error($e->getMessage());
+        } catch (\Exception $exception) {
+            $this->logger->error($exception->getMessage());
         }
 
         return $return;
+    }
+
+    protected function isNewsletterCheckboxInCheckoutMarked(?\Magento\Quote\Api\Data\AddressInterface $billingAddress): bool
+    {
+        try {
+            return (bool)$billingAddress->getExtensionAttributes()->getNewsletterSubscribe();
+        } catch (\Exception $exception) {
+            return false;
+        }
+    }
+
+    protected function getCustomerIdByEmail(string $email): ?int
+    {
+        try {
+            $customer = $this->customerRepository->get($email);
+
+            return $customer->getId();
+        } catch (\Magento\Framework\Exception\NoSuchEntityException $exception) {
+            return null;
+        }
     }
 }
