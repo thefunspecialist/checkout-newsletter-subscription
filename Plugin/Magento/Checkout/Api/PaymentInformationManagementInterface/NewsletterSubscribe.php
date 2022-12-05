@@ -4,19 +4,23 @@ namespace MageSuite\CheckoutNewsletterSubscription\Plugin\Magento\Checkout\Api\P
 
 class NewsletterSubscribe
 {
+    protected \Magento\Store\Model\StoreManagerInterface $storeManager;
+
     protected \Magento\Quote\Api\CartRepositoryInterface $quoteRepository;
 
-    protected \Magento\Newsletter\Model\Subscriber $subscriber;
+    protected \Magento\Newsletter\Model\SubscriptionManagerInterface $subscriptionManager;
 
     protected \Psr\Log\LoggerInterface $logger;
 
     public function __construct(
+        \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Magento\Quote\Api\CartRepositoryInterface $quoteRepository,
-        \Magento\Newsletter\Model\Subscriber $subscriber,
+        \Magento\Newsletter\Model\SubscriptionManagerInterface $subscriptionManager,
         \Psr\Log\LoggerInterface $logger
     ) {
+        $this->storeManager = $storeManager;
         $this->quoteRepository = $quoteRepository;
-        $this->subscriber = $subscriber;
+        $this->subscriptionManager = $subscriptionManager;
         $this->logger = $logger;
     }
 
@@ -31,15 +35,26 @@ class NewsletterSubscribe
             return $return;
         }
 
+        if (!$this->isNewsletterCheckboxInCheckoutMarked($billingAddress)) {
+            return $return;
+        }
+
         try {
-            if ($billingAddress->getExtensionAttributes()->getNewsletterSubscribe()) {
-                $quote = $this->quoteRepository->get($cartId);
-                $this->subscriber->subscribe($quote->getCustomerEmail());
-            }
+            $quote = $this->quoteRepository->get($cartId);
+            $this->subscriptionManager->subscribeCustomer($quote->getCustomerId(), $this->storeManager->getStore()->getId());
         } catch (\Exception $e) {
             $this->logger->error($e->getMessage());
         }
 
         return $return;
+    }
+
+    protected function isNewsletterCheckboxInCheckoutMarked(?\Magento\Quote\Api\Data\AddressInterface $billingAddress): bool
+    {
+        try {
+            return (bool)$billingAddress->getExtensionAttributes()->getNewsletterSubscribe();
+        } catch (\Exception $exception) {
+            return false;
+        }
     }
 }
