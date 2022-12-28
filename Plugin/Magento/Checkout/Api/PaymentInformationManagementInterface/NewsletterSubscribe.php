@@ -1,60 +1,44 @@
 <?php
+declare(strict_types=1);
 
 namespace MageSuite\CheckoutNewsletterSubscription\Plugin\Magento\Checkout\Api\PaymentInformationManagementInterface;
 
 class NewsletterSubscribe
 {
-    protected \Magento\Store\Model\StoreManagerInterface $storeManager;
+    protected \MageSuite\CheckoutNewsletterSubscription\Model\Command\AssignNewsletterFlag $assignNewsletterFlag;
 
-    protected \Magento\Quote\Api\CartRepositoryInterface $quoteRepository;
-
-    protected \Magento\Newsletter\Model\SubscriptionManagerInterface $subscriptionManager;
-
-    protected \Psr\Log\LoggerInterface $logger;
+    protected \Magento\Quote\Api\CartRepositoryInterface $cartRepository;
 
     public function __construct(
-        \Magento\Store\Model\StoreManagerInterface $storeManager,
-        \Magento\Quote\Api\CartRepositoryInterface $quoteRepository,
-        \Magento\Newsletter\Model\SubscriptionManagerInterface $subscriptionManager,
-        \Psr\Log\LoggerInterface $logger
+        \MageSuite\CheckoutNewsletterSubscription\Model\Command\AssignNewsletterFlag $assignNewsletterFlag,
+        \Magento\Quote\Api\CartRepositoryInterface $cartRepository
     ) {
-        $this->storeManager = $storeManager;
-        $this->quoteRepository = $quoteRepository;
-        $this->subscriptionManager = $subscriptionManager;
-        $this->logger = $logger;
+        $this->assignNewsletterFlag = $assignNewsletterFlag;
+        $this->cartRepository = $cartRepository;
     }
 
-    public function afterSavePaymentInformationAndPlaceOrder(
+    public function beforeSavePaymentInformationAndPlaceOrder(
         \Magento\Checkout\Api\PaymentInformationManagementInterface $subject,
-        $return,
         $cartId,
         \Magento\Quote\Api\Data\PaymentInterface $paymentMethod,
         \Magento\Quote\Api\Data\AddressInterface $billingAddress = null
     ) {
-        if ($billingAddress === null) {
-            return $return;
-        }
-
-        if (!$this->isNewsletterCheckboxInCheckoutMarked($billingAddress)) {
-            return $return;
-        }
-
-        try {
-            $quote = $this->quoteRepository->get($cartId);
-            $this->subscriptionManager->subscribeCustomer($quote->getCustomerId(), $this->storeManager->getStore()->getId());
-        } catch (\Exception $e) {
-            $this->logger->error($e->getMessage());
-        }
-
-        return $return;
+        $quote = $this->getQuote($cartId);
+        $this->assignNewsletterFlag->execute($quote, $paymentMethod);
     }
 
-    protected function isNewsletterCheckboxInCheckoutMarked(?\Magento\Quote\Api\Data\AddressInterface $billingAddress): bool
+    public function beforeSavePaymentInformation(
+        \Magento\Checkout\Api\PaymentInformationManagementInterface $subject,
+        $cartId,
+        \Magento\Quote\Api\Data\PaymentInterface $paymentMethod,
+        \Magento\Quote\Api\Data\AddressInterface $billingAddress = null
+    ) {
+        $quote = $this->getQuote($cartId);
+        $this->assignNewsletterFlag->execute($quote, $paymentMethod);
+    }
+
+    protected function getQuote(string $cartId): \Magento\Quote\Api\Data\CartInterface
     {
-        try {
-            return (bool)$billingAddress->getExtensionAttributes()->getNewsletterSubscribe();
-        } catch (\Exception $exception) {
-            return false;
-        }
+        return $this->cartRepository->getActive($cartId);
     }
 }
