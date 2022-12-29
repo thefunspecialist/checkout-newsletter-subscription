@@ -1,52 +1,76 @@
 <?php
-declare(strict_types=1);
 
 namespace MageSuite\CheckoutNewsletterSubscription\Plugin\Magento\Checkout\Api\GuestPaymentInformationManagementInterface;
 
 class NewsletterSubscribe
 {
-    protected \MageSuite\CheckoutNewsletterSubscription\Model\Command\AssignNewsletterFlag $assignNewsletterFlag;
+    protected \Magento\Store\Model\StoreManagerInterface $storeManager;
 
-    protected \Magento\Quote\Model\QuoteIdMaskFactory $quoteIdMaskFactory;
+    protected \Magento\Customer\Api\CustomerRepositoryInterface $customerRepository;
 
-    protected \Magento\Quote\Api\CartRepositoryInterface $cartRepository;
+    protected \Magento\Newsletter\Model\SubscriptionManagerInterface $subscriptionManager;
+
+    protected \Psr\Log\LoggerInterface $logger;
 
     public function __construct(
-        \MageSuite\CheckoutNewsletterSubscription\Model\Command\AssignNewsletterFlag $assignNewsletterFlag,
-        \Magento\Quote\Model\QuoteIdMaskFactory $quoteIdMaskFactory,
-        \Magento\Quote\Api\CartRepositoryInterface $cartRepository
+        \Magento\Store\Model\StoreManagerInterface $storeManager,
+        \Magento\Customer\Api\CustomerRepositoryInterface $customerRepository,
+        \Magento\Newsletter\Model\SubscriptionManagerInterface $subscriptionManager,
+        \Psr\Log\LoggerInterface $logger
     ) {
-        $this->assignNewsletterFlag = $assignNewsletterFlag;
-        $this->quoteIdMaskFactory = $quoteIdMaskFactory;
-        $this->cartRepository = $cartRepository;
+        $this->storeManager = $storeManager;
+        $this->customerRepository = $customerRepository;
+        $this->subscriptionManager = $subscriptionManager;
+        $this->logger = $logger;
     }
 
-    public function beforeSavePaymentInformationAndPlaceOrder(
+    public function afterSavePaymentInformationAndPlaceOrder(
         \Magento\Checkout\Api\GuestPaymentInformationManagementInterface $subject,
+        $return,
         $cartId,
         $email,
         \Magento\Quote\Api\Data\PaymentInterface $paymentMethod,
         \Magento\Quote\Api\Data\AddressInterface $billingAddress = null
     ) {
-        $quote = $this->getQuote($cartId);
-        $this->assignNewsletterFlag->execute($quote, $paymentMethod);
+        if ($billingAddress === null) {
+            return $return;
+        }
+
+        if (!$this->isNewsletterCheckboxInCheckoutMarked($billingAddress)) {
+            return $return;
+        }
+
+        try {
+            $customerId = $this->getCustomerIdByEmail($email);
+            if ($customerId) {
+                $this->subscriptionManager->subscribeCustomer($customerId, $this->storeManager->getStore()->getId());
+            } else {
+                $this->subscriptionManager->subscribe($email, $this->storeManager->getStore()->getId());
+            }
+        } catch (\Exception $exception) {
+            $this->logger->error($exception->getMessage());
+        }
+
+        return $return;
     }
 
-    public function beforeSavePaymentInformation(
-        \Magento\Checkout\Api\GuestPaymentInformationManagementInterface $subject,
-        $cartId,
-        $email,
-        \Magento\Quote\Api\Data\PaymentInterface $paymentMethod,
-        \Magento\Quote\Api\Data\AddressInterface $billingAddress = null
-    ) {
-        $quote = $this->getQuote($cartId);
-        $this->assignNewsletterFlag->execute($quote, $paymentMethod);
-    }
-
-    protected function getQuote(string $cartId): \Magento\Quote\Api\Data\CartInterface
+    protected function isNewsletterCheckboxInCheckoutMarked(?\Magento\Quote\Api\Data\AddressInterface $billingAddress): bool
     {
-        $quoteIdMask = $this->quoteIdMaskFactory->create()->load($cartId, 'masked_id');
+        try {
+            return (bool)$billingAddress->getExtensionAttributes()->getNewsletterSubscribe();
+        } catch (\Exception $exception) {
+            return false;
+        }
+    }
 
-        return $this->cartRepository->get($quoteIdMask->getQuoteId());
+    protected function getCustomerIdByEmail(string $email): ?int
+    {
+        try {
+            $customer = $this->customerRepository->get($email);
+
+            return $customer->getId();
+        } catch (\Magento\Framework\Exception\NoSuchEntityException $exception) {
+            return null;
+        }
     }
 }
