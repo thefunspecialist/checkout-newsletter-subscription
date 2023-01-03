@@ -37,7 +37,7 @@ class NewsletterSubscribe
         $this->assignNewsletterFlag->execute($quote, $paymentMethod);
     }
 
-    protected function getQuote(string $cartId): \Magento\Quote\Api\Data\CartInterface
+    protected function getQuote(int $cartId): \Magento\Quote\Api\Data\CartInterface
     {
         return $this->cartRepository->getActive($cartId);
     }
