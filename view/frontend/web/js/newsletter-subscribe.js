@@ -10,7 +10,7 @@ define(
                 displayArea: 'newsletter-subscribe',
                 template: 'MageSuite_CheckoutNewsletterSubscription/newsletter-subscribe'
             },
-            isChecked: ko.observable(true)
+            isChecked: ko.observable(false)
         });
     }
 );
